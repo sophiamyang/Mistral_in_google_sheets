@@ -1,6 +1,7 @@
 // Mistral API configuration
 const MISTRAL_API_KEY = 'YOUR_API_KEY_HERE';
 const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
+const DEFAULT_SYSTEM_MESSAGE = "You are a helpful AI assistant.";
 
 /**
  * Creates a menu item for the spreadsheet
@@ -48,6 +49,17 @@ function getMistralApiKey() {
 function processSelectedCells() {
   const ui = SpreadsheetApp.getUi();
   try {
+    // Prompt for system message
+    const systemResult = ui.prompt(
+      'System Message (Optional)',
+      'Enter a system message to guide the AI, or click Cancel to use default:',
+      ui.ButtonSet.OK_CANCEL
+    );
+    
+    const systemMessage = systemResult.getSelectedButton() == ui.Button.OK ? 
+      systemResult.getResponseText() : 
+      DEFAULT_SYSTEM_MESSAGE;
+    
     const sheet = SpreadsheetApp.getActiveSheet();
     const range = sheet.getActiveRange();
     const values = range.getValues();
@@ -61,7 +73,7 @@ function processSelectedCells() {
       for (let j = 0; j < values[i].length; j++) {
         const cellValue = values[i][j];
         if (cellValue) {
-          const response = callMistralAPI(cellValue);
+          const response = callMistralAPI(cellValue, systemMessage);
           range.getCell(i + 1, j + 1).setValue(response);
           // Add a small delay to avoid rate limits
           Utilities.sleep(100);
@@ -81,18 +93,29 @@ function processSelectedCells() {
 /**
  * Calls the Mistral API with the given prompt
  */
-function callMistralAPI(prompt) {
+function callMistralAPI(prompt, systemMessage = DEFAULT_SYSTEM_MESSAGE) {
   const apiKey = getMistralApiKey();
+  const messages = [];
+  
+  // Add system message if provided
+  if (systemMessage) {
+    messages.push({
+      role: "system",
+      content: systemMessage
+    });
+  }
+  
+  // Add user message
+  messages.push({
+    role: "user",
+    content: prompt
+  });
+
   const payload = {
-    model: "mistral-large-latest",  // Using the latest large model
-    messages: [
-      {
-        role: "user",
-        content: prompt
-      }
-    ],
+    model: "mistral-large-latest",
+    messages: messages,
     temperature: 0.7,
-    max_tokens: 500  // Add token limit for safety
+    max_tokens: 500
   };
 
   const options = {
@@ -124,16 +147,16 @@ function callMistralAPI(prompt) {
 
 /**
  * Custom function to call Mistral AI from a cell
+ * @param {string} systemMessage Optional system message to guide the AI
  * @param {string} input The input text to process
  * @customfunction
  */
-function MISTRAL(input) {
+function MISTRAL(systemMessage, input) {
   if (!input) return '';
   
   try {
-    // Convert input to string if it's not already
     const prompt = input.toString();
-    return callMistralAPI(prompt);
+    return callMistralAPI(prompt, systemMessage || DEFAULT_SYSTEM_MESSAGE);
   } catch (error) {
     return `Error: ${error.message}`;
   }
