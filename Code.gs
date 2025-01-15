@@ -1,5 +1,4 @@
 // Mistral API configuration
-const MISTRAL_API_KEY = 'YOUR_API_KEY_HERE';
 const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
 const DEFAULT_SYSTEM_MESSAGE = "You are a helpful AI assistant.";
 
