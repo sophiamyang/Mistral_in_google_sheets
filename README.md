@@ -2,7 +2,7 @@
 
 This Google Apps Script allows you to interact with the Mistral AI API directly from Google Sheets, enabling AI-powered text processing in your spreadsheets.
 
-![Mistral AI Google Sheets Demo](demo.mp4)
+![Mistral AI Google Sheets Demo](demo.png)
 
 ## Features
 
